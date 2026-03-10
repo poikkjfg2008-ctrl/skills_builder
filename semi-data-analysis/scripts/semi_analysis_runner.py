@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import time
 import uuid
 from pathlib import Path
@@ -20,6 +21,13 @@ from typing import Any, Dict
 
 def _state_file(state_dir: Path, run_id: str) -> Path:
     return state_dir / f"{run_id}.json"
+
+
+def _validate_run_id(run_id: str) -> str:
+    """Allow only safe run_id characters to prevent path traversal."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", run_id):
+        raise ValueError(f"invalid run_id: {run_id}")
+    return run_id
 
 
 def _load_state(path: Path) -> Dict[str, Any]:
@@ -83,6 +91,7 @@ def query_analysis_status(run_id: str, state_dir: Path) -> Dict[str, Any]:
     - call your real status API with `run_id`
     - map API response to this returned schema
     """
+    run_id = _validate_run_id(run_id)
     path = _state_file(state_dir, run_id)
     if not path.exists():
         raise FileNotFoundError(f"run_id not found: {run_id}")
