@@ -162,8 +162,11 @@ def cmd_wait(args: argparse.Namespace) -> int:
     while True:
         payload = mock_query_status(runid)
         print(json.dumps(payload, ensure_ascii=False, indent=2))
-        if payload.get("status") in {"success", "failed"}:
+        status = payload.get("status")
+        if status == "success":
             return 0
+        if status == "failed":
+            return 3
         if (_now() - start_t) > args.timeout:
             print(json.dumps({"runid": runid, "status": "timeout"}, ensure_ascii=False, indent=2))
             return 2
